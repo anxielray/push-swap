@@ -1,0 +1,52 @@
+STARTING WITH THE LOGIC OF THE QUESTION. 
+
+Points To Note
+
+- Push-swap uses a Non-comparison Sorting algorithm. 
+
+- Push-swap(program 
+1) should be able to calculate and display smallest program using the 
+provided instruction language that sorts the integers received. 
+
+- I should have a checker that will take an integer and reads the 
+intstructions on the stdInput. 
+
+- After reading, checker should execute 
+them and display 'OK' if sorted, otherwise 'KO' 
+
+- Two stacks are 
+provided a(intergers)[this should be sorted in ascending order and 
+b(another stack of integers) 
+
+- Sort them according to the instructions given:
+ - /pa/ push the top first element of the stack b to a
+ - /pb/ push the top first element of the stack a to b
+ - /sa/ swap the first 2 elements of the stack a
+ - /sb/ swap the first 2 elements of the stack b
+ - /ss/ execute sa and sb
+ - /ra/ rotate the stack a (shift up all stack elements by 1, first=last)
+ - /rb/ rotate b
+ - /rr/ execute ra and rb
+ - /rra/ reverse rotate a (last=first)
+ - /rrb/ reverse rotate b
+ - /rrr/ execute rra and rrb
+
+Requirement
+
+PushSwap
+- Create a program (push-swap); that display the least list of instruction
+possible to sort a (the smallest number being at the top)
+  `PushSwap(a string) string{}`
+
+- The instructions should be seperated by a "\n" (!nothing else)!
+- Incase of an Error(duplicates, some argument ain't integers) it should be displayed
+as "Error+\n" on the stdErr() incase of no argument
+(instructions should is empty/no display)
+
+Checker
+- Receies as an argument, that stack a formatted
+- If no order is given, Checker should exit from the program...
+- Checker executes the instructions given, on the stack
+received as an argument...
+- If post-sorting, b is empty, then return "OK\n" else "KO\n"
+- Error[same handling] (instructions don't exist/incorrectly formatted)
