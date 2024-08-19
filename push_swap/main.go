@@ -28,30 +28,22 @@ func push_swap(arg string) {
     // check if the first 2 elements can be pushed to stack b
     if validateFirstPush(stackA, sortedArray) {
         stackA, stackB, instructions = firstPush(stackA, stackB)
-        instructions += "pb
-pb
-"
+        instructions += "pb\npb"
     } else if validateRotate(stackA, sortedArray) {
         stackA = rotate(stackA)
         stackA, stackB = push(stackA, stackB)
-        instructions += "ra
-pb
-"
+        instructions += "ra\npb"
     } else if validateReverseRotate(stackA, sortedArray) {
         stackA = reverseRotate(stackA)
         stackA, stackB = push(stackA, stackB)
-        instructions += "rra
-pb
-"
+        instructions += "rra\npb"
     }
 
     // consider arranging the rest of the immigrants to b in descendin order
     if validateRRR(stackA, stackB, sortedArray) {
         stackA, stackB = bothReverseRotate(stackA, stackB)
         stackA, stackB = push(stackA, stackB)
-        instructions += "rrr
-pb
-"
+        instructions += "rrr\npb"
     }
 
     for i := range sortedArray {
@@ -176,23 +168,19 @@ func validateRRR(stackA, stackB, sortedArray []int) bool {
 func solveThree(stack []int) (threeSolved []int, instructions string) {
     if stack[0] > stack[1] && stack[0] > stack[2] {
         rotated := rotate(stack)
-        instructions += "ra
-"
+        instructions += "ra\n"
         if rotated[0] > rotated[1] {
             threeSolved = swap(rotated)
-            instructions += "sa
-"
+            instructions += "sa\n"
         } else {
             threeSolved = rotated
         }
     } else if stack[0] > stack[1] && stack[0] < stack[2] {
         threeSolved = swap(stack)
-        instructions += "sa
-"
+        instructions += "sa\n"
     } else if stack[0] < stack[1] && stack[0] > stack[2] {
         threeSolved = reverseRotate(stack)
-        instructions += "rra
-"
+        instructions += "rra\n"
     }
     return
 }
@@ -201,8 +189,7 @@ func solveThree(stack []int) (threeSolved []int, instructions string) {
 func firstPush(stackA, stackB []int) (a, b []int, instruction string) {
     for x := 1; x <= 2; x++ {
         a, b = push(stackA, stackB)
-        instruction += "pb
-"
+        instruction += "pb\n"
     }
     return
 }
