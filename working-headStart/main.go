@@ -38,13 +38,12 @@ func (s *stack) reverse_rotate() {
 }
 
 func push_swap(a, b *stack) {
-
-	//make sure we have something to compare in the stack
+	// make sure we have something to compare in the stack
 	if len(*a) < 2 {
 		return
 	}
 
-	//if the top most element is greater than the second element, swap the stack
+	// if the top most element is greater than the second element, swap the stack
 	if (*a)[0] > (*a)[1] {
 		a.swap()
 		fmt.Println("sa")
@@ -52,7 +51,7 @@ func push_swap(a, b *stack) {
 
 	for len(*a) > 2 {
 
-		//after confirming the order to which the first 2 elements, push them to stack b
+		// after confirming the order to which the first 2 elements, push them to stack b
 
 		if (*a)[0] > (*a)[1] && (*a)[1] > (*a)[2] {
 			// Case 1: 3 2 1 - reverse order
@@ -65,7 +64,7 @@ func push_swap(a, b *stack) {
 		if (*a)[0] < (*a)[1] {
 			b.push(a.pop())
 			fmt.Println("pb")
-		} else { //I generally feel like this is part is irrelevant
+		} else { // I generally feel like this is part is irrelevant
 			a.rotate()
 			fmt.Println("ra")
 		}
