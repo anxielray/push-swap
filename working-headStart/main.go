@@ -158,18 +158,16 @@ func push_swap(a, b *stack) (instruction string) {
 		} else if len(*a) == 3 && len(*b) == 3 { // if the elements inside of stack a is only 3, then, the function to stack 3 elements is called
 			instruction += sortThreeA(a)
 			instruction += sortThreeB(b)
+			if isSorted(a) {
+				if isSortedDescending(b) {
+					// push back to a till stack b becomes empty...
+					for len(*b) > 0 {
+						a.push(b.pop())
+						instruction += "pa\n"
+					}
+				}
+			}
 		}
-	}
-
-	// push back to a till stack b becomes empty...
-	for len(*b) > 0 {
-		a.push(b.pop())
-		instruction += "pa\n"
-	}
-
-	if (*a)[0] > (*a)[1] {
-		a.swap()
-		instruction += "sa\n"
 	}
 	return
 }
@@ -262,13 +260,33 @@ func isAnyTopThreeSmallest(slice []int, a int) bool {
 
 // isSorted compares the original slice to its sorted version.
 // It returns true if the original slice is already sorted in ascending order, otherwise false.
-func isSorted(slice *[]int) bool {
+func isSorted(slice *stack) bool {
 	// Create a copy of the original slice
 	sortedSlice := make([]int, len(*slice))
 	copy(sortedSlice, *slice)
 
 	// Sort the copy
 	sort.Ints(sortedSlice)
+
+	// Compare the original slice to the sorted copy
+	for i := range *slice {
+		if (*slice)[i] != sortedSlice[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isSortedDescending compares the original slice to its sorted version in descending order.
+// It returns true if the original slice is already sorted in descending order, otherwise false.
+func isSortedDescending(slice *stack) bool {
+	// Create a copy of the original slice
+	sortedSlice := make([]int, len(*slice))
+	copy(sortedSlice, *slice)
+
+	// Sort the copy in descending order
+	sort.Sort(sort.Reverse(sort.IntSlice(sortedSlice)))
 
 	// Compare the original slice to the sorted copy
 	for i := range *slice {
