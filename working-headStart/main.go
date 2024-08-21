@@ -76,10 +76,41 @@ func sortThreeA(stck *stack) (instruction string) {
 	return
 }
 
+// sortThree sorts a slice of three integers in ascending or descending order
+// using a maximum of two swaps.
+func sortThreeB(stck *stack) (instruction string) {
+	// for (*stck) b, the slice should be in descending order
+	// check if it is sorted for (*stck) b
+	if (*stck)[0] > (*stck)[1] && (*stck)[1] > (*stck)[2] {
+		instruction = ""
+	}
+	// check for the situations of [1, 3, 2] (for (*stck) b, we will need to rrb, rrb)
+	if (*stck)[0] < (*stck)[1] && (*stck)[1] > (*stck)[2] {
+		instruction = "rrb\nrrb\n"
+	}
+	// check for the [2, 1, 3]
+	if (*stck)[0] > (*stck)[1] && (*stck)[0] < (*stck)[2] {
+		instruction = "sb\n"
+	}
+	// check for the [2, 3, 1]
+	if (*stck)[0] > (*stck)[2] && (*stck)[0] < (*stck)[1] {
+		instruction = "rrb\n"
+	}
+	// check for [3, 1, 2]
+	if (*stck)[0] > (*stck)[1] && (*stck)[0] > (*stck)[2] && (*stck)[1] < (*stck)[2] {
+		instruction = "rrb\nsb\n"
+	}
+	// check for  [1, 2, 3]
+	if (*stck)[0] < (*stck)[1] && (*stck)[1] < (*stck)[2] {
+		instruction = "sb\nrrb"
+	}
+	return
+}
+
 // sorts
 func push_swap(a, b *stack) (instruction string) {
 	// make sure we have something to compare in the stack
-	if len(*a) < 2 {
+	if len(*a) <= 2 {
 		println("The number of arguments you provided are not enough, add one more...")
 		os.Exit(0)
 	}
@@ -100,29 +131,33 @@ func push_swap(a, b *stack) (instruction string) {
 				a.reverse_rotate() // first roation
 				a.reverse_rotate() // second rotation
 				instruction += "rra\nrra\n"
-			}
-
-			// find out if the top 2 elements, any of them is the amongst the 3 largest elements in the sorted stack
-			if isAnyTopThree(slice, slice[0]) && !isAnyTopThree(slice, slice[1]) {
+			} else if isAnyTopThree(slice, slice[0]) && !isAnyTopThree(slice, slice[1]) { // find out if the top 2 elements, any of them is the amongst the 3 largest elements in the sorted stack
 				a.rotate()
 				instruction += "ra\n"
 			} else if isAnyTopThree(slice, slice[0]) && isAnyTopThree(slice, slice[1]) {
 				a.rotate()
 				a.rotate()
 				instruction += "ra\nra\n"
-			} else if !isAnyTopThree(slice, slice[0]) && !isAnyTopThree(slice, slice[1]) && !isAnyTopThreeSmallest(slice, slice[len(slice)-1]) && !isAnyTopThree(slice, slice[len(slice)-2]) {
-				b.push(a.pop())
-				b.push(a.pop())
-				instruction += "pb\npb\n"
 			}
 
-			//
+			// do the first 2 pushes to stack b regardless...
+			b.push(a.pop())
+			b.push(a.pop())
+			instruction += "pb\npb\n"
+
+			// check if the arramgement is correct for the incoming 3rd number...
 			if (*b)[0] < (*b)[1] {
 				b.swap()
 				instruction += "sb\n"
 			}
-		} else if len(*a) == 3 { // if the elements inside of stack a is only 3, then, the function to stack 3 elements is called
+
+			// perform the 3rd push to stack b
+			b.push(a.pop())
+			instruction += "pb\n"
+			continue
+		} else if len(*a) == 3 && len(*b) == 3 { // if the elements inside of stack a is only 3, then, the function to stack 3 elements is called
 			instruction += sortThreeA(a)
+			instruction += sortThreeB(b)
 		}
 	}
 
@@ -223,4 +258,24 @@ func isAnyTopThreeSmallest(slice []int, a int) bool {
 	}
 
 	return false
+}
+
+// isSorted compares the original slice to its sorted version.
+// It returns true if the original slice is already sorted in ascending order, otherwise false.
+func isSorted(slice *[]int) bool {
+	// Create a copy of the original slice
+	sortedSlice := make([]int, len(*slice))
+	copy(sortedSlice, *slice)
+
+	// Sort the copy
+	sort.Ints(sortedSlice)
+
+	// Compare the original slice to the sorted copy
+	for i := range *slice {
+		if (*slice)[i] != sortedSlice[i] {
+			return false
+		}
+	}
+
+	return true
 }
