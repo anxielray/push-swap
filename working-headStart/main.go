@@ -47,22 +47,30 @@ func sortThreeA(stck *stack) (instruction string) {
 	}
 	// check for the situations of [1, 3, 2]
 	if (*stck)[0] < (*stck)[1] && (*stck)[1] > (*stck)[2] {
+		stck.reverse_rotate()
+		stck.swap()
 		instruction = "rra\nsa\n"
 	}
 	// check for the [2, 1, 3]
 	if (*stck)[0] > (*stck)[1] && (*stck)[0] < (*stck)[2] {
+		stck.swap()
 		instruction = "sa\n"
 	}
 	// check for the [2, 3, 1]
 	if (*stck)[0] > (*stck)[2] && (*stck)[0] < (*stck)[1] {
+		stck.reverse_rotate()
 		instruction = "rra\n"
 	}
 	// check for [3, 1, 2]
 	if (*stck)[0] > (*stck)[1] && (*stck)[0] > (*stck)[2] && (*stck)[1] < (*stck)[2] {
+		stck.reverse_rotate()
+		stck.reverse_rotate()
 		instruction = "rra\nrra\n"
 	}
 	// check for [3, 2, 1]
 	if (*stck)[0] > (*stck)[1] && (*stck)[1] > (*stck)[2] {
+		stck.swap()
+		stck.reverse_rotate()
 		instruction = "sa\nrra\n"
 	}
 	return
@@ -72,39 +80,53 @@ func sortThreeA(stck *stack) (instruction string) {
 func push_swap(a, b *stack) (instruction string) {
 	// make sure we have something to compare in the stack
 	if len(*a) < 2 {
-		return
+		println("The number of arguments you provided are not enough, add one more...")
+		os.Exit(0)
 	}
 
+	// working with the staack of length more than 2 (3 > ...)
 	for len(*a) > 2 {
-		// start by confirming if we have the correct count of elements in the stack. If the stack has only 3 elements...
+		// check if the stack came with only 3 elements inside...
 		if len(*a) != 3 {
-			//Since we have to start by pushing to stack b, confirm if we have the least elements in the sorted stack at the very bottom of the stack
-			
-			// find out if the top 2 elements, any of them is the amongst the 3 largest elements in the sorted stack
+
+			// convert the string passed in the command line as a slice of string to be used by other functions thst need it in that form...
 			slice := parseIntSlice(os.Args[1])
-			if isAnyTopThree(slice, slice[0])&& !isAnyTopThree(slice, slice[1]) {
+
+			// Since we have to start by pushing to stack b, confirm if we have the least elements in the sorted stack at the very bottom of the stack
+			if isAnyTopThreeSmallest(slice, slice[len(slice)-1]) {
+				a.reverse_rotate()
+				instruction += "rra\n"
+			} else if isAnyTopThreeSmallest(slice, slice[len(slice)-1]) {
+				a.reverse_rotate() // first roation
+				a.reverse_rotate() // second rotation
+				instruction += "rra\nrra\n"
+			}
+
+			// find out if the top 2 elements, any of them is the amongst the 3 largest elements in the sorted stack
+			if isAnyTopThree(slice, slice[0]) && !isAnyTopThree(slice, slice[1]) {
+				a.rotate()
 				instruction += "ra\n"
-			}else if isAnyTopThree(slice, slice[1]) && isAnyTopThree(slice, slice[1]) {
+			} else if isAnyTopThree(slice, slice[0]) && isAnyTopThree(slice, slice[1]) {
 				a.rotate()
 				a.rotate()
 				instruction += "ra\nra\n"
-			}else {
-				instruction += 
-			}
-			
-
-			if (*a)[0] < (*a)[1] {
+			} else if !isAnyTopThree(slice, slice[0]) && !isAnyTopThree(slice, slice[1]) && !isAnyTopThreeSmallest(slice, slice[len(slice)-1]) && !isAnyTopThree(slice, slice[len(slice)-2]) {
 				b.push(a.pop())
-				instruction += "pb\n"
-			} else { // I generally feel like this is part is irrelevant
-				a.rotate()
-				instruction += "ra\n"
+				b.push(a.pop())
+				instruction += "pb\npb\n"
 			}
-		} else if len(*a) == 3 {
+
+			//
+			if (*b)[0] < (*b)[1] {
+				b.swap()
+				instruction += "sb\n"
+			}
+		} else if len(*a) == 3 { // if the elements inside of stack a is only 3, then, the function to stack 3 elements is called
 			instruction += sortThreeA(a)
 		}
 	}
 
+	// push back to a till stack b becomes empty...
 	for len(*b) > 0 {
 		a.push(b.pop())
 		instruction += "pa\n"
@@ -118,6 +140,7 @@ func push_swap(a, b *stack) (instruction string) {
 }
 
 func main() {
+	// confrim if the arguments are 2 on the command line; the name of the program and the argument...
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run push_swap.go \"2 1 3 6 5 8\"")
 		return
@@ -177,4 +200,27 @@ func parseIntSlice(s string) (slice []int) {
 	}
 
 	return intSlice
+}
+
+func isAnyTopThreeSmallest(slice []int, a int) bool {
+	if len(slice) < 3 {
+		panic("The slice must contain at least three elements.")
+	}
+
+	// Sort the slice in ascending order
+	sortedSlice := make([]int, len(slice))
+	copy(sortedSlice, slice)
+	sort.Ints(sortedSlice)
+
+	// Get the top 3 smallest elements
+	topThreeSmallest := sortedSlice[:3]
+
+	// Check if any of the given integers are in the top three smallest
+	for _, top := range topThreeSmallest {
+		if a == top {
+			return true
+		}
+	}
+
+	return false
 }
