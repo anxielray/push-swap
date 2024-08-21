@@ -77,7 +77,7 @@ func sortThreeA(stck *stack) (instruction string) {
 }
 
 // sortThree sorts a slice of three integers in ascending or descending order
-// using a maximum of two swaps.
+// using a maximum of two instructions.
 func sortThreeB(stck *stack) (instruction string) {
 	// for (*stck) b, the slice should be in descending order
 	// check if it is sorted for (*stck) b
@@ -118,16 +118,15 @@ func push_swap(a, b *stack) (instruction string) {
 	// working with the staack of length more than 2 (3 > ...)
 	for len(*a) > 2 {
 		// check if the stack came with only 3 elements inside...
-		if len(*a) != 3 {
+		if len(*a) > 4 {
 
 			// convert the string passed in the command line as a slice of string to be used by other functions thst need it in that form...
 			slice := parseIntSlice(os.Args[1])
-
 			// Since we have to start by pushing to stack b, confirm if we have the least elements in the sorted stack at the very bottom of the stack
-			if isAnyTopThreeSmallest(slice, slice[len(slice)-1]) {
+			if isAnyTopThreeSmallest(slice, slice[len(slice)-1]) && !isAnyTopThreeSmallest(slice, slice[len(slice)-2]) {
 				a.reverse_rotate()
 				instruction += "rra\n"
-			} else if isAnyTopThreeSmallest(slice, slice[len(slice)-1]) {
+			} else if isAnyTopThreeSmallest(slice, slice[len(slice)-2]) && isAnyTopThreeSmallest(slice, slice[len(slice)-1]) {
 				a.reverse_rotate() // first roation
 				a.reverse_rotate() // second rotation
 				instruction += "rra\nrra\n"
@@ -139,7 +138,6 @@ func push_swap(a, b *stack) (instruction string) {
 				a.rotate()
 				instruction += "ra\nra\n"
 			}
-
 			// do the first 2 pushes to stack b regardless...
 			b.push(a.pop())
 			b.push(a.pop())
@@ -155,17 +153,21 @@ func push_swap(a, b *stack) (instruction string) {
 			b.push(a.pop())
 			instruction += "pb\n"
 			continue
-		} else if len(*a) == 3 && len(*b) == 3 { // if the elements inside of stack a is only 3, then, the function to stack 3 elements is called
+		}
+		if len(*a) == 3 { // if the elements inside of stack a is only 3, then, the function to stack 3 elements is called
 			instruction += sortThreeA(a)
-			instruction += sortThreeB(b)
-			if isSorted(a) {
-				if isSortedDescending(b) {
+			if len(*b) == 3 {
+				instruction += sortThreeB(b)
+				if isSorted(a) && isSortedDescending(b) {
 					// push back to a till stack b becomes empty...
 					for len(*b) > 0 {
 						a.push(b.pop())
 						instruction += "pa\n"
 					}
 				}
+			}
+			if isSorted(a) && len(*b) == 0 {
+				break
 			}
 		}
 	}
