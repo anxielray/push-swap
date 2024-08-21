@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -37,48 +38,83 @@ func (s *stack) reverse_rotate() {
 	*s = append([]int{(*s)[len(*s)-1]}, (*s)[:len(*s)-1]...)
 }
 
-func push_swap(a, b *stack) {
+// sorts 3 elements left in stack a
+func sortThreeA(stck *stack) (instruction string) {
+	// for stack a, the slice should be in descending order
+	// check if it is sorted for stack a(base case)
+	if (*stck)[0] < (*stck)[1] && (*stck)[1] < (*stck)[2] {
+		instruction = ""
+	}
+	// check for the situations of [1, 3, 2]
+	if (*stck)[0] < (*stck)[1] && (*stck)[1] > (*stck)[2] {
+		instruction = "rra\nsa\n"
+	}
+	// check for the [2, 1, 3]
+	if (*stck)[0] > (*stck)[1] && (*stck)[0] < (*stck)[2] {
+		instruction = "sa\n"
+	}
+	// check for the [2, 3, 1]
+	if (*stck)[0] > (*stck)[2] && (*stck)[0] < (*stck)[1] {
+		instruction = "rra\n"
+	}
+	// check for [3, 1, 2]
+	if (*stck)[0] > (*stck)[1] && (*stck)[0] > (*stck)[2] && (*stck)[1] < (*stck)[2] {
+		instruction = "rra\nrra\n"
+	}
+	// check for [3, 2, 1]
+	if (*stck)[0] > (*stck)[1] && (*stck)[1] > (*stck)[2] {
+		instruction = "sa\nrra\n"
+	}
+	return
+}
+
+// sorts
+func push_swap(a, b *stack) (instruction string) {
 	// make sure we have something to compare in the stack
 	if len(*a) < 2 {
 		return
 	}
 
-	// if the top most element is greater than the second element, swap the stack
-	if (*a)[0] > (*a)[1] {
-		a.swap()
-		fmt.Println("sa")
-	}
-
 	for len(*a) > 2 {
+		// start by confirming if we have the correct count of elements in the stack. If the stack has only 3 elements...
+		if len(*a) != 3 {
+			//Since we have to start by pushing to stack b, confirm if we have the least elements in the sorted stack at the very bottom of the stack
+			
+			// find out if the top 2 elements, any of them is the amongst the 3 largest elements in the sorted stack
+			slice := parseIntSlice(os.Args[1])
+			if isAnyTopThree(slice, slice[0])&& !isAnyTopThree(slice, slice[1]) {
+				instruction += "ra\n"
+			}else if isAnyTopThree(slice, slice[1]) && isAnyTopThree(slice, slice[1]) {
+				a.rotate()
+				a.rotate()
+				instruction += "ra\nra\n"
+			}else {
+				instruction += 
+			}
+			
 
-		// after confirming the order to which the first 2 elements, push them to stack b
-
-		if (*a)[0] > (*a)[1] && (*a)[1] > (*a)[2] {
-			// Case 1: 3 2 1 - reverse order
-			a.swap() // Swap top two: 2 3 1
-			fmt.Println("sa")
-			a.reverse_rotate() // Rotate to get: 1 2 3
-			fmt.Println("rra")
-		}
-
-		if (*a)[0] < (*a)[1] {
-			b.push(a.pop())
-			fmt.Println("pb")
-		} else { // I generally feel like this is part is irrelevant
-			a.rotate()
-			fmt.Println("ra")
+			if (*a)[0] < (*a)[1] {
+				b.push(a.pop())
+				instruction += "pb\n"
+			} else { // I generally feel like this is part is irrelevant
+				a.rotate()
+				instruction += "ra\n"
+			}
+		} else if len(*a) == 3 {
+			instruction += sortThreeA(a)
 		}
 	}
 
 	for len(*b) > 0 {
 		a.push(b.pop())
-		fmt.Println("pa")
+		instruction += "pa\n"
 	}
 
 	if (*a)[0] > (*a)[1] {
 		a.swap()
-		fmt.Println("sa")
+		instruction += "sa\n"
 	}
+	return
 }
 
 func main() {
@@ -94,5 +130,51 @@ func main() {
 	}
 
 	b := make(stack, 0)
-	push_swap(&a, &b)
+	fmt.Println(push_swap(&a, &b))
+}
+
+// isAnyTopThree checks if any of the provided integers are among the top 3 largest elements
+// in the sorted slice.
+func isAnyTopThree(stack []int, a int) bool {
+	if len(stack) < 3 {
+		println("The slice must contain at least three elements.")
+		os.Exit(0)
+	}
+
+	// Sort the slice in descending order
+	sortedSlice := make([]int, len(stack))
+	copy(sortedSlice, stack)
+	sort.Sort(sort.Reverse(sort.IntSlice(sortedSlice)))
+
+	// Get the top 3 largest elements
+	topThree := sortedSlice[:3]
+
+	// Check if any of the given integers are in the top three
+	for _, top := range topThree {
+		if a == top {
+			return true
+		}
+	}
+
+	return false
+}
+
+func parseIntSlice(s string) (slice []int) {
+	// Split the input string by spaces
+	strSlice := strings.Split(s, " ")
+
+	// Create a slice to hold the integers
+	intSlice := make([]int, len(strSlice))
+
+	// Convert each string to an integer and store it in the intSlice
+	for i, str := range strSlice {
+		num, err := strconv.Atoi(str)
+		if err != nil {
+			println("Error parsing string to int") // Return the error if the conversion fails
+			os.Exit(0)
+		}
+		intSlice[i] = num
+	}
+
+	return intSlice
 }
