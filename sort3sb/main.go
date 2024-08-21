@@ -26,6 +26,10 @@ func sortThreeB(stack []int) (instruction string) {
 	if stack[0] > stack[1] && stack[0] > stack[2] && stack[1] < stack[2] {
 		instruction = "rrb\nsb\n"
 	}
+	// check for  [1, 2, 3]
+	if stack[0] < stack[1] && stack[1] < stack[2] {
+		instruction = "sb\nrrb"
+	}
 	return
 }
 
