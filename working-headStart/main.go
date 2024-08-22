@@ -16,10 +16,10 @@ func (s *stack) push(x int) {
 	*s = append(*s, x)
 }
 
-// deletes an element from a stack after pushing it to another stack...(I feel like there should be a review in this method)
+// deletes an element from a stack after pushing it to another stack...
 func (s *stack) pop() int {
-	x := (*s)[len(*s)-1]
-	*s = (*s)[:len(*s)-1]
+	x := (*s)[0] // FILO: so this is the first element(first in)... basically to remove it, it would mean it is the last out...
+	*s = (*s)[1:]
 	return x
 }
 
@@ -45,6 +45,11 @@ func sortThreeA(stck *stack) (instruction string) {
 	if (*stck)[0] < (*stck)[1] && (*stck)[1] < (*stck)[2] {
 		instruction = ""
 	}
+	// check for the [2, 3, 1]
+	if (*stck)[0] < (*stck)[1] && (*stck)[0] > (*stck)[2] {
+		stck.reverse_rotate()
+		instruction = "rra\n"
+	}
 	// check for the situations of [1, 3, 2]
 	if (*stck)[0] < (*stck)[1] && (*stck)[1] > (*stck)[2] {
 		stck.reverse_rotate()
@@ -55,11 +60,6 @@ func sortThreeA(stck *stack) (instruction string) {
 	if (*stck)[0] > (*stck)[1] && (*stck)[0] < (*stck)[2] {
 		stck.swap()
 		instruction = "sa\n"
-	}
-	// check for the [2, 3, 1]
-	if (*stck)[0] > (*stck)[2] && (*stck)[0] < (*stck)[1] {
-		stck.reverse_rotate()
-		instruction = "rra\n"
 	}
 	// check for [3, 1, 2]
 	if (*stck)[0] > (*stck)[1] && (*stck)[0] > (*stck)[2] && (*stck)[1] < (*stck)[2] {
@@ -154,6 +154,7 @@ func push_swap(a, b *stack) (instruction string) {
 			instruction += "pb\n"
 			continue
 		}
+
 		if len(*a) == 3 { // if the elements inside of stack a is only 3, then, the function to stack 3 elements is called
 			instruction += sortThreeA(a)
 			if len(*b) == 3 {
@@ -169,6 +170,10 @@ func push_swap(a, b *stack) (instruction string) {
 			if isSorted(a) && len(*b) == 0 {
 				break
 			}
+		}
+		if len(*a) == 4 {
+			ps4(a, b)
+			os.Exit(0)
 		}
 	}
 	return
@@ -298,4 +303,61 @@ func isSortedDescending(slice *stack) bool {
 	}
 
 	return true
+}
+
+func isSmallest(numbers []int, element int) bool {
+	if len(numbers) == 0 {
+		return false
+	}
+
+	// Assume the given element is the smallest.
+	smallest := true
+
+	// Check if there is any element smaller than the given element.
+	for _, num := range numbers {
+		if num < element {
+			smallest = false
+			break
+		}
+	}
+
+	return smallest
+}
+
+func ps4(a, b *stack) {
+	slice := parseIntSlice(os.Args[1])
+	if isSmallest(slice, (*a)[0]) && !isSorted(a) {
+		b.push(a.pop())
+		println("pb\n" + sortThreeA(a) + "pa")
+	} else if isSmallest(slice, (*a)[0]) && isSorted(a) {
+		fmt.Println("")
+	} else if isSmallest(slice, (*a)[len(slice)-1]) {
+		a.reverse_rotate()
+		if !isSorted(a) {
+			b.push(a.pop())
+			fmt.Println(a)
+			fmt.Println(b)
+			fmt.Println("rra\n" + "pb\n" + sortThreeA(a) + "pa")
+		} else if isSorted(a) {
+			fmt.Println("rra\nsa")
+		}
+
+	} else if isSmallest(slice, (*a)[len(slice)-2]) {
+		a.reverse_rotate()
+		a.reverse_rotate()
+		if !isSorted(a) {
+			b.push(a.pop())
+			fmt.Println("rra\nrra\n" + "pb\n" + sortThreeA(a) + "pa")
+		} else if isSorted(a) {
+			fmt.Println("rra\nrra")
+		}
+	} else if isSmallest(slice, (*a)[1]) {
+		a.swap()
+		if !isSorted(a) {
+			b.push(a.pop())
+			fmt.Println("sa\n" + "pb\n" + sortThreeA(a) + "pa")
+		} else if isSorted(a) {
+			fmt.Println("sa")
+		}
+	}
 }
