@@ -1,203 +1,136 @@
 package main
 
 import (
-    "fmt"
-    "os"
-    "sort"
-    "strconv"
-    "strings"
+	"fmt"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 func main() {
-    arguments()
-    push_swap(os.Args[1]) // prints out the required commands to sort the stack elements.
-    // now the algorithm used to run the program...
+	if len(os.Args) != 2 {
+		return // No arguments given
+	}
+	instructions := pushSwap(os.Args[1])
+	if instructions != "" {
+		fmt.Print(instructions)
+	}
 }
 
-// grams function
-func push_swap(arg string) {
-    sortedArray := makeStackSlice(arg)
-    sort.Ints(sortedArray)
-    var (
-        stackA       []int
-        stackB       []int
-        instructions string
-    )
-    stackA = makeStackSlice(arg)
+// pushSwap sorts the stack and returns the instructions to do so.
+func pushSwap(arg string) string {
+	stackA := makeStackSlice(arg)
+	if stackA == nil {
+		return "Error\n"
+	}
 
-    // check if the first 2 elements can be pushed to stack b
-    if validateFirstPush(stackA, sortedArray) {
-        stackA, stackB, instructions = firstPush(stackA, stackB)
-        instructions += "pb\npb"
-    } else if validateRotate(stackA, sortedArray) {
-        stackA = rotate(stackA)
-        stackA, stackB = push(stackA, stackB)
-        instructions += "ra\npb"
-    } else if validateReverseRotate(stackA, sortedArray) {
-        stackA = reverseRotate(stackA)
-        stackA, stackB = push(stackA, stackB)
-        instructions += "rra\npb"
-    }
+	if len(stackA) == 0 {
+		return ""
+	}
 
-    // consider arranging the rest of the immigrants to b in descendin order
-    if validateRRR(stackA, stackB, sortedArray) {
-        stackA, stackB = bothReverseRotate(stackA, stackB)
-        stackA, stackB = push(stackA, stackB)
-        instructions += "rrr\npb"
-    }
+	sortedArray := make([]int, len(stackA))
+	copy(sortedArray, stackA)
+	sort.Ints(sortedArray)
 
-    for i := range sortedArray {
-        if len(stackA) == 3 && (stackA[0] != sortedArray[i] && stackA[1] != stackA[(i+1)] && stackA[1] != sortedArray[i+2]) {
-            stackA, instructions = solveThree(stackA)
-            instructions += ""
-        }
-    }
-    var (
-        test []int
-        flag bool
-    )
-    test = append(test, stackB[(len(stackB)-1):]...)
-    test = append(test, stackA...)
-    for i, num := range test {
-        for x, n := range sortedArray {
-            if (i == x) && (num == n) {
-                flag = true
-            }
-        }
-    }
-    if flag {
-        fmt.Println(instructions)
-    }
+	var stackB []int
+	var instructions []string
+
+	// Using simple cases for 2 or 3 elements
+	switch len(stackA) {
+	case 2:
+		if stackA[0] > stackA[1] {
+			instructions = append(instructions, "sa")
+		}
+	case 3:
+		instructions = solveThree(&stackA)
+	default:
+		instructions = sortLargerStacks(&stackA, &stackB, sortedArray)
+	}
+
+	return strings.Join(instructions, "\n") + "\n"
 }
 
-// the function will take an argument string and apppednd each number to a slice of int.
-func makeStackSlice(arg string) (sorted []int) {
-    array := strings.Fields(arg)
-    for _, str := range array {
-        num, err := strconv.Atoi(str)
-        if err != nil {
-            fmt.Println("Error")
-            os.Exit(0)
-        }
-        sorted = append(sorted, num)
-    }
-    return
+// makeStackSlice converts the argument string to a slice of integers.
+func makeStackSlice(arg string) []int {
+	strArray := strings.Fields(arg)
+	uniqueNumbers := make(map[int]bool)
+	stack := []int{}
+
+	for _, str := range strArray {
+		num, err := strconv.Atoi(str)
+		if err != nil || uniqueNumbers[num] {
+			fmt.Fprint(os.Stderr, "Error\n")
+			return nil
+		}
+		uniqueNumbers[num] = true
+		stack = append(stack, num)
+	}
+	return stack
 }
 
-// INSTRUCTIONS:
-// swapping the first two elements
-func swap(array []int) (swapped []int) {
-    swapped = append(array[2:], swapped...)
-    swapped = append([]int{array[0]}, swapped...)
-    swapped = append([]int{array[1]}, swapped...)
-    return
+// solveThree sorts a stack of three elements and returns the instructions.
+func solveThree(stack *[]int) []string {
+	instructions := []string{}
+	if (*stack)[0] > (*stack)[1] {
+		swap(stack)
+		instructions = append(instructions, "sa")
+	}
+	if (*stack)[0] > (*stack)[2] {
+		reverseRotate(stack)
+		instructions = append(instructions, "rra")
+	}
+	if (*stack)[1] > (*stack)[2] {
+		swap(stack)
+		instructions = append(instructions, "sa")
+	}
+	return instructions
 }
 
-// rotate(the first element becomes last)
-func rotate(array []int) (rotated []int) {
-    rotated = append(array[1:], rotated...)
-    rotated = append(rotated, array[0])
-    return
+// sortLargerStacks implements sorting logic for larger stacks.
+func sortLargerStacks(stackA *[]int, stackB *[]int, sortedArray []int) []string {
+	instructions := []string{}
+	for len(*stackA) > 0 {
+		// Push elements to stack B in sorted order
+		if len(*stackB) == 0 || (*stackA)[0] < (*stackB)[len(*stackB)-1] {
+			instructions = append(instructions, "pb")
+			*stackB = append([]int{(*stackA)[0]}, *stackB...)
+			*stackA = (*stackA)[1:]
+		} else {
+			// Rotate or swap logic can be added here as needed
+			instructions = append(instructions, "ra")
+			rotate(stackA)
+		}
+	}
+
+	// Move elements back from stack B to stack A
+	for len(*stackB) > 0 {
+		instructions = append(instructions, "pa")
+		*stackA = append([]int{(*stackB)[0]}, *stackA...)
+		*stackB = (*stackB)[1:]
+	}
+
+	return instructions
 }
 
-// reverse rotate(the last elemen becomes first)
-func reverseRotate(array []int) (reverseRotated []int) {
-    reverseRotated = append(array[:len(array)-1], reverseRotated...)
-    reverseRotated = append([]int{array[len(array)-1]}, reverseRotated...)
-    return
+// swap swaps the first two elements of the stack.
+func swap(stack *[]int) {
+	if len(*stack) > 1 {
+		(*stack)[0], (*stack)[1] = (*stack)[1], (*stack)[0]
+	}
 }
 
-// RRR command
-func bothReverseRotate(stackA, stackB []int) (rrrA, rrrB []int) {
-    return reverseRotate(stackA), reverseRotate(stackB)
+// rotate rotates the stack (first element becomes last).
+func rotate(stack *[]int) {
+	if len(*stack) > 0 {
+		*stack = append((*stack)[1:], (*stack)[0])
+	}
 }
 
-// SS command
-func bothSwap(stackA, stackB []int) (ssA, ssB []int) {
-    return swap(stackA), swap(stackB)
+// reverseRotate reverses the rotation of the stack.
+func reverseRotate(stack *[]int) {
+	if len(*stack) > 0 {
+		last := (*stack)[len(*stack)-1]
+		*stack = append([]int{last}, (*stack)[:len(*stack)-1]...)
+	}
 }
-
-// RR command
-func bothRotate(stackA, stackB []int) (rrA, rrB []int) {
-    return rotate(stackA), rotate(stackB)
-}
-
-// push command (should add an element to a host array and delete it from previous host array)
-func push(previousHost, newHost []int) (previous, current []int) {
-    current = append([]int{previousHost[0]}, newHost...)
-    previous = previousHost[1:]
-    return
-}
-
-// ALGORITHM:
-// check if the first two elements do not fall in the last half of the sorted array
-func validateFirstPush(stackA, sortedArray []int) bool {
-    if stackA[0] < sortedArray[len(stackA)/2] {
-        if stackA[1] < sortedArray[len(stackA)/2] {
-            return true
-        }
-    }
-    return false
-}
-
-// incase the validate first throws a false, we validate for a reverse rotate or a rotate.
-func validateRotate(stackA, sortedArray []int) bool {
-    if stackA[0] >= sortedArray[len(stackA)/2] && stackA[1] < sortedArray[len(stackA)/2] {
-        return true
-    }
-    return false
-}
-
-// validate a reverse rotate
-func validateReverseRotate(stackA, sortedArray []int) bool {
-    if stackA[0] >= sortedArray[len(stackA)/2] && stackA[len(stackA)-1] < sortedArray[len(stackA)/2] {
-        return true
-    }
-    return false
-}
-
-// validate reverse rotate
-func validateRRR(stackA, stackB, sortedArray []int) bool {
-    if validateReverseRotate(stackA, sortedArray) && validateReverseRotate(stackB, sortedArray) {
-        return true
-    }
-    return false
-}
-
-// function to solve the 3 elements command
-func solveThree(stack []int) (threeSolved []int, instructions string) {
-    if stack[0] > stack[1] && stack[0] > stack[2] {
-        rotated := rotate(stack)
-        instructions += "ra\n"
-        if rotated[0] > rotated[1] {
-            threeSolved = swap(rotated)
-            instructions += "sa\n"
-        } else {
-            threeSolved = rotated
-        }
-    } else if stack[0] > stack[1] && stack[0] < stack[2] {
-        threeSolved = swap(stack)
-        instructions += "sa\n"
-    } else if stack[0] < stack[1] && stack[0] > stack[2] {
-        threeSolved = reverseRotate(stack)
-        instructions += "rra\n"
-    }
-    return
-}
-
-// throw the first 2 elements to stack b regardless
-func firstPush(stackA, stackB []int) (a, b []int, instruction string) {
-    for x := 1; x <= 2; x++ {
-        a, b = push(stackA, stackB)
-        instruction += "pb\n"
-    }
-    return
-}
-
-// check for the number of arguments passed on the CMD
-func arguments() {
-    if len(os.Args) != 2 {
-        return
-    }
-}
-
