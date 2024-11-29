@@ -126,15 +126,15 @@ func CountingSort(arr []int) []int {
 }
 
 // we use a maximum of 2 steps...using the radix sort algo...
-func (a *StackA) solveThreeA() StackA {
+func (a *StackA) solveThreeA() *StackA {
 	var a1 StackA
 
 	a1.items = CountingSort(a.items)
 	a = &a1
-	return *a
+	return a
 }
 
-func (a *StackA) push(b *StackB) (StackA, StackB) {
+func (a *StackA) pushB(b *StackB) (StackA, StackB) {
 	var (
 		a2 StackA
 		a1 = *&a
@@ -149,6 +149,28 @@ func (a *StackA) push(b *StackB) (StackA, StackB) {
 	}
 	a = &a2
 	b = *&b1
+	fmt.Println("pb")
+	return *a, *b
+}
+
+func (b *StackB) pushA(a *StackA) (StackA, StackB) {
+	var (
+		a1 StackA
+		b1 StackB
+	)
+	a1.items = append(a1.items, a.items...)
+	for i := range b.items {
+		if i != 0 {
+			b1.items = append(b1.items, b.items[i])
+		} else {
+			a1.items = append([]int{b.items[i]}, a1.items...)
+		}
+	}
+
+	b = &b1
+	a = &a1
+
+	fmt.Println("pa")
 	return *a, *b
 }
 
@@ -159,7 +181,122 @@ func main() {
 
 	// throw the first 2 elements without checking to stack B...
 	// r, i := a.throwFirstTwo(&b)
-	// fmt.Println(r.solveThreeA(), i)
-	r, i := a.push(&b)
-	fmt.Println(r.push(&i))
+	r, i := a.pushB(&b)
+	fmt.Println(r, i)
+	x, q := r.pushB(&i)
+	fmt.Println(x, q)
+	x = *x.solveThreeA()
+
+	//sort the elements in stack b in descending order...(We will later work on tracking steps taken to achieve this)
+	q.items = reverseSlice(RadixSort(q.items))
+	fmt.Println("ss")
+	fmt.Println(x, q)
+
+	//check for the target element
+	targetElementA1 := x.TargetElement(q.items[0])
+
+	//mark the element at index 0
+	// startIndex := x.items[0]
+
+	//bring the target element to the top
+	z := *x.TargetElementToTheTop(targetElementA1)
+	fmt.Println(z, q)
+
+	//push back an element to stack a
+	c, d := q.pushA(&z)
+
+	//re-organize the elements in stack a
+	g := *(c.RotateA()).RotateA()
+
+	targetElementA2 := g.TargetElement(d.items[0])
+
+	//bring the target element to the top
+	h := *(g.TargetElementToTheTop(targetElementA2))
+	h = *h.TargetElementToTheTop(g.TargetElement(d.items[0]))
+	fmt.Println(h, d)
+
+	//push back another element to stack b
+	e, f := d.pushA(&h)
+	fmt.Println(e, f)
+
+	n := *((e.RotateA()).RotateA()).RotateA()
+	fmt.Println(n, f)
+}
+
+func (a *StackA) RotateA() *StackA {
+	var (
+		a1 StackA
+	)
+
+	for i := range a.items {
+		if i > 0 {
+			a1.items = append(a1.items, a.items[i])
+		}
+	}
+	a1.items = append(a1.items, a.items[0])
+	a = &a1
+	fmt.Println("ra")
+	return a
+}
+
+func HowManyFromTheTop(a []int, top int) int {
+	var aim int
+	for i, r := range a {
+		if r == top {
+			aim = i
+			break
+		}
+	}
+	return aim + 1
+}
+
+func reverseSlice(a []int) []int {
+	for i, j := 0, len(a)-1; i < j; i, j = i+1, j-1 {
+		a[i], a[j] = a[j], a[i]
+	}
+	return a
+}
+
+func (a *StackA) TargetElement(elem int) int {
+	var test StackA
+	test.items = append(test.items, a.items...)
+	test.items = append(test.items, elem)
+	temp := RadixSort(test.items)
+	return getIndex(temp, elem) + 1
+}
+
+func getIndex(a []int, target int) int {
+	for i, r := range a {
+		if r == target {
+			return i
+		}
+	}
+	return -1
+}
+
+func (a *StackA) TargetElementToTheTop(targetIndex int) *StackA {
+
+	//check the length of the stack A
+	l := len(a.items)
+	diff := l - targetIndex
+	if diff == 0 {
+		fmt.Println("rra")
+	}
+	a = a.ReverseRotate()
+	return a
+}
+
+func (a *StackA) ReverseRotate() *StackA {
+	var (
+		a1 StackA
+	)
+
+	for i, r := range a.items {
+		if i < len(a.items)-1 {
+			a1.items = append(a1.items, r)
+		}
+	}
+	a1.items = append([]int{a.items[len(a.items)-1]}, a1.items...)
+	a = &a1
+	return a
 }
