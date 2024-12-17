@@ -26,11 +26,6 @@ func init() {
 }
 
 func main() {
-	if len(os.Args) != 2 || (len(os.Args) == 2 && os.Args[1] == "") {
-		fmt.Println(`Usage:go run . <option>
-go run . "2 1 3 6 5 8"`)
-		os.Exit(1)
-	}
 	pushSwap()
 }
 
@@ -84,22 +79,28 @@ func pushSwap() {
 
 /* Error Handling */
 func ErrorWrongArguments() {
+
+	if len(os.Args) != 2 || (len(os.Args) == 2 && os.Args[1] == "") {
+		fmt.Println(`Usage:go run . <option>
+go run . "2 1 3 6 5 8"`)
+		os.Exit(1)
+	}
 	for _, c := range os.Args[1] {
-		if!unicode.IsDigit(c) && c != ' ' {
-            fmt.Printf("Error: Invalid argument '%c'. Only digits and spaces are allowed.\n", c)
-            os.Exit(1)
-        }
+		if !unicode.IsDigit(c) && c != ' ' {
+			fmt.Printf("Error: Invalid argument '%c'. Only digits and spaces are allowed.\n", c)
+			os.Exit(1)
+		}
 	}
 }
 
 func ErrorDuplicates() {
 	nArgs := CollectItems()
 	for i := 0; i < len(nArgs); i++ {
-		for j := i+1; j < len(nArgs); j++ {
+		for j := i + 1; j < len(nArgs); j++ {
 			if nArgs[i] == nArgs[j] {
-                fmt.Println("Error: Duplicate values detected")
-                os.Exit(1)
-            }
+				fmt.Println("Error: Duplicate values detected")
+				os.Exit(1)
+			}
 		}
 	}
 }
