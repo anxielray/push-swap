@@ -19,6 +19,89 @@ type StackB struct {
 	items []int
 }
 
+func main() {
+
+	var (
+		a StackA
+		b StackB
+	)
+	a.items = CollectItems()
+
+	if len(a.items) == 3 {
+		a.ASort3()
+	} else if len(a.items) > 3 {
+		//create a  sorted array
+		var sorted = RadixSort(CollectItems())
+
+		//identify the median element in  the array
+		med := FindMedian(sorted)
+
+		var count int
+		//push to b what is less than the median element
+		a, b, count = a.MedPush(med, &b)
+
+		a = a.SwapA()
+		b = b.SwapB()
+
+		//check for the validations of the commands ss, rr and rrr
+		commands = Rrr(Rr(Ss(commands)))
+
+		//push back elements to a
+		a, b = b.PushBack(count, &a)
+	}
+
+	//print the commannds
+	for _, co := range commands {
+		fmt.Println(co)
+	}
+
+}
+
+func (a *StackA) ASort3() *StackA {
+	var (
+		a1 StackA
+	)
+	a1.items = append(a1.items, a.items...)
+
+	if a1.items[1] > a1.items[0] && a1.items[0] < a1.items[2] {
+		a1.SwapA()
+		a1.RotateA()
+	} else if a1.items[2] > a1.items[0] && a1.items[0] > a1.items[1] {
+		a1.SwapA()
+	} else if a1.items[1] > a1.items[0] && a1.items[0] > a1.items[2] {
+		a1.ReverseRotateA()
+	} else if a1.items[0] > a1.items[2] && a1.items[2] > a1.items[1] {
+		a1.RotateA()
+	} else if a1.items[0] > a1.items[1] && a1.items[1] > a1.items[2] {
+		a1.RotateA()
+		a1.SwapA()
+	}
+	*a = a1
+	return a
+}
+
+func (b *StackB) BSort3() *StackB {
+	var (
+		b1 StackB
+	)
+	b1.items = append(b1.items, b.items...)
+	if b1.items[2] > b1.items[1] && b1.items[0] > b1.items[1] {
+		b1.RotateB()
+		b1.SwapB()
+	} else if b1.items[1] > b1.items[0] && b1.items[0] < b1.items[2] {
+		b1.RotateB()
+	} else if b1.items[2] > b1.items[0] && b1.items[0] > b1.items[1] {
+		b1.ReverseRotateB()
+	} else if b1.items[1] > b1.items[0] && b1.items[0] > b1.items[2] {
+		b1.SwapB()
+	} else if b1.items[0] > b1.items[2] && b1.items[2] > b1.items[1] {
+		b1.SwapB()
+		b1.RotateB()
+	}
+	*b = b1
+	return b
+}
+
 func CollectItems() []int {
 	var result []int
 	arg := os.Args[1:]
@@ -112,40 +195,6 @@ func CountingSort(arr []int) []int {
 	}
 
 	return arr
-}
-
-func main() {
-
-	var (
-		a StackA
-		b StackB
-	)
-	a.items = CollectItems()
-
-	//create a  sorted array
-	var sorted = RadixSort(CollectItems())
-
-	//identify the median element in  the array
-	med := FindMedian(sorted)
-
-	var count int
-	//push to b what is less than the median element
-	a, b, count = a.MedPush(med, &b)
-
-	a = a.SwapA()
-	b = b.SwapB()
-
-	//check for the validations of the commands ss, rr and rrr
-	commands = Rr(Rr(Ss(commands)))
-
-	//push back elements to a
-	a, b = b.PushBack(count, &a)
-
-	//print the commannds
-	for _, co := range commands {
-		fmt.Println(co)
-	}
-
 }
 
 func (b *StackB) PushBack(n int, a *StackA) (StackA, StackB) {
@@ -273,6 +322,20 @@ func (a *StackA) RotateA() StackA {
 	return *a
 }
 
+func (a *StackA) ReverseRotateA() *StackA {
+
+	var a1 StackA
+	for i := len(a.items) - 1; i >= 0; i-- {
+		if i != len(a.items)-1 {
+			a1.items = append(a1.items, a.items[i])
+		}
+	}
+	a1.items = append([]int{a.items[len(a1.items)-1]}, a1.items...)
+	*a = a1
+	commands = append(commands, "rra")
+	return a
+}
+
 func (b *StackB) RotateB() StackB {
 
 	var b1 StackB
@@ -285,6 +348,20 @@ func (b *StackB) RotateB() StackB {
 	b = &b1
 	commands = append(commands, "rb")
 	return *b
+}
+
+func (b *StackB) ReverseRotateB() *StackB {
+
+	var b1 StackB
+	for i := len(b.items) - 1; i >= 0; i-- {
+		if i != len(b.items)-1 {
+			b1.items = append(b1.items, b.items[i])
+		}
+	}
+	b1.items = append([]int{b.items[len(b1.items)-1]}, b1.items...)
+	*b = b1
+	commands = append(commands, "rrb")
+	return b
 }
 
 func (a *StackA) MedPush(med int, b *StackB) (StackA, StackB, int) {
@@ -413,3 +490,9 @@ func Rrr(commands []string) []string {
 	commands = result
 	return commands
 }
+
+/*
+Make recursive calls
+create 2 slices that will hold the commands of a and b b4 a push operation.
+have the final commands slice that will hold the final commands
+*/
