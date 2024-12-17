@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"unicode"
 )
 
 // declare the variable that  will hold the commands
@@ -19,42 +20,98 @@ type StackB struct {
 	items []int
 }
 
-func main() {
+func init() {
+	ErrorWrongArguments()
+	ErrorDuplicates()
+}
 
+func main() {
+	if len(os.Args) != 2 || (len(os.Args) == 2 && os.Args[1] == "") {
+		fmt.Println(`Usage:go run . <option>
+go run . "2 1 3 6 5 8"`)
+		os.Exit(1)
+	}
+	pushSwap()
+}
+
+func pushSwap() {
 	var (
 		a StackA
 		b StackB
 	)
 	a.items = CollectItems()
+	//create a  sorted array
+	var sorted = RadixSort(CollectItems())
 
+	if len(a.items) < 2 {
+		fmt.Println("No sortment for elements less than 2")
+		return
+	}
+	if len(a.items) == 2 {
+		if !(AlreadySorted(a.items, sorted)) {
+			a.SwapA()
+		}
+
+	}
 	if len(a.items) == 3 {
-		a.ASort3()
-	} else if len(a.items) > 3 {
-		//create a  sorted array
-		var sorted = RadixSort(CollectItems())
-
+		if !(AlreadySorted(a.items, sorted)) {
+			a.ASort3()
+		}
+	}
+	if len(a.items) > 3 {
 		//identify the median element in  the array
 		med := FindMedian(sorted)
-
 		var count int
 		//push to b what is less than the median element
 		a, b, count = a.MedPush(med, &b)
-
 		a = a.SwapA()
 		b = b.SwapB()
-
 		//check for the validations of the commands ss, rr and rrr
 		commands = Rrr(Rr(Ss(commands)))
-
 		//push back elements to a
 		a, b = b.PushBack(count, &a)
 	}
-
-	//print the commannds
-	for _, co := range commands {
-		fmt.Println(co)
+	//print the commands
+	if len(commands) == 0 {
+		fmt.Println("No commands used")
+	} else {
+		for _, co := range commands {
+			fmt.Println(co)
+		}
 	}
 
+}
+
+/* Error Handling */
+func ErrorWrongArguments() {
+	for _, c := range os.Args[1] {
+		if!unicode.IsDigit(c) && c != ' ' {
+            fmt.Printf("Error: Invalid argument '%c'. Only digits and spaces are allowed.\n", c)
+            os.Exit(1)
+        }
+	}
+}
+
+func ErrorDuplicates() {
+	nArgs := CollectItems()
+	for i := 0; i < len(nArgs); i++ {
+		for j := i+1; j < len(nArgs); j++ {
+			if nArgs[i] == nArgs[j] {
+                fmt.Println("Error: Duplicate values detected")
+                os.Exit(1)
+            }
+		}
+	}
+}
+
+func AlreadySorted(a, sorted []int) bool {
+	for i := 0; i < len(a); i++ {
+		if a[i] != sorted[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (a *StackA) ASort3() *StackA {
@@ -104,8 +161,14 @@ func (b *StackB) BSort3() *StackB {
 
 func CollectItems() []int {
 	var result []int
-	arg := os.Args[1:]
-	for _, ar := range arg {
+	var args []string
+	arg := os.Args[1]
+	for _, c := range arg {
+		if unicode.IsNumber(c) {
+			args = append(args, string(c))
+		}
+	}
+	for _, ar := range args {
 		num, _ := strconv.Atoi(ar)
 		result = append(result, num)
 	}
@@ -284,6 +347,7 @@ func (a *StackA) PushB(b *StackB) (StackA, StackB) {
 	a = &a1
 	b = &b1
 	commands = append(commands, "pb")
+	pushSwap()
 	return *a, *b
 }
 
@@ -305,6 +369,7 @@ func (b *StackB) PushA(a *StackA) (StackA, StackB) {
 	a = &a1
 	b = &b1
 	commands = append(commands, "pa")
+	pushSwap()
 	return *a, *b
 }
 
